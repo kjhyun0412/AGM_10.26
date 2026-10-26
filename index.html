@@ -6,7 +6,14 @@
 <title>또 시켜먹으면 15% 할인 | 단골 재주문 이벤트</title>
 <meta http-equiv="refresh" content="0; url=./%EB%9D%BC%EC%9D%B4%ED%94%84%EC%82%AC%EC%9D%B4%ED%81%B4.html">
 <link rel="canonical" href="./%EB%9D%BC%EC%9D%B4%ED%94%84%EC%82%AC%EC%9D%B4%ED%81%B4.html">
-<script>location.replace('./%EB%9D%BC%EC%9D%B4%ED%94%84%EC%82%AC%EC%9D%B4%ED%81%B4.html' + location.search + location.hash);</script>
+<script>(function () {
+  var q = location.search;
+  // 이동하면 원래 유입 사이트 정보가 사라지므로 _ref 로 함께 전달
+  if (document.referrer && document.referrer.indexOf(location.host) === -1 && q.indexOf('_ref=') === -1) {
+    q += (q ? '&' : '?') + '_ref=' + encodeURIComponent(document.referrer);
+  }
+  location.replace('./%EB%9D%BC%EC%9D%B4%ED%94%84%EC%82%AC%EC%9D%B4%ED%81%B4.html' + q + location.hash);
+})();</script>
 </head>
 <body>
 <p><a href="./%EB%9D%BC%EC%9D%B4%ED%94%84%EC%82%AC%EC%9D%B4%ED%81%B4.html">이벤트 페이지로 이동하기</a></p>

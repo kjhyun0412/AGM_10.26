@@ -398,6 +398,15 @@
     .sticky-cta { max-width: 720px; }
   }
 </style>
+<!-- Amplitude: 브라우저용 API 키는 공개되어도 되는 값입니다. (비밀 키는 절대 여기에 넣지 마세요) -->
+<script src="https://cdn.amplitude.com/script/ef453569642635194327410a401e3911.js"></script>
+<script>
+  if (window.amplitude && window.amplitude.init) {
+    window.amplitude.init('ef453569642635194327410a401e3911', {
+      autocapture: { attribution: true, pageViews: true, sessions: true, elementInteractions: false, formInteractions: false, fileDownloads: false }
+    });
+  }
+</script>
 </head>
 <body>
 <div class="wrap">
@@ -666,13 +675,31 @@
   // ---------- 유입 채널 파악 (UTM) & 이벤트 트래킹 ----------
   var params = new URLSearchParams(location.search);
   var source = params.get('utm_source') || 'direct';
+  // index.html 에서 넘어올 때 원래 유입 사이트(referrer)를 _ref 로 전달받음
+  var referrer = params.get('_ref') || document.referrer || '';
   window.dataLayer = window.dataLayer || [];
   function track(event, data) {
-    var payload = Object.assign({ event: event, utm_source: source, utm_medium: params.get('utm_medium') || '', utm_campaign: params.get('utm_campaign') || 'reorder15' }, data || {});
+    var payload = Object.assign({ event: event, utm_source: source, utm_medium: params.get('utm_medium') || '', utm_campaign: params.get('utm_campaign') || 'reorder15', referrer: referrer }, data || {});
     window.dataLayer.push(payload);
-    // 실제 운영 시 GA4/Meta Pixel 등으로 전송
+    // Amplitude 로 전송 (광고 차단 등으로 SDK 가 없으면 건너뜀)
+    try {
+      if (window.amplitude && window.amplitude.track) {
+        var props = Object.assign({}, payload); delete props.event;
+        window.amplitude.track(event, props);
+      }
+    } catch (e) {}
     console.log('[track]', payload);
   }
+  // 유입 경로를 사용자 속성으로 저장 → Amplitude 에서 경로별로 나눠 볼 수 있음
+  try {
+    if (window.amplitude && window.amplitude.Identify) {
+      var id = new window.amplitude.Identify();
+      id.set('channel', source);
+      if (params.get('utm_medium')) id.set('channel_medium', params.get('utm_medium'));
+      if (referrer) id.set('referrer', referrer);
+      window.amplitude.identify(id);
+    }
+  } catch (e) {}
   track('lp_view');
 
   // 채널별 맞춤 배지 문구
