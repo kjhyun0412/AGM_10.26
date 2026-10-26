@@ -829,6 +829,50 @@
     })(start);
   }
 
+  // ---------- CTA 노출(cta_impression) · 클릭(cta_click) 수집 ----------
+  // 대상: 쿠폰 받기 버튼 6곳(hero·coupon·howto·calc·final·sticky) + 가게별 재주문 버튼
+  var ctaEls = [];
+  document.querySelectorAll('[data-claim]').forEach(function (el) {
+    el.dataset.ctaId = el.dataset.pos;
+    el.dataset.ctaType = 'coupon_claim';
+    ctaEls.push(el);
+  });
+  document.querySelectorAll('.btn-reorder').forEach(function (el) {
+    var s = shops[el.dataset.shop];
+    el.dataset.ctaId = 'shop_reorder_' + el.dataset.shop;
+    el.dataset.ctaType = 'shop_reorder';
+    el.dataset.ctaShop = s.name;
+    ctaEls.push(el);
+  });
+  function ctaProps(el) {
+    var p = {
+      cta_id: el.dataset.ctaId,
+      cta_type: el.dataset.ctaType,
+      cta_label: (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 40),
+      coupon_claimed: !!claimed
+    };
+    if (el.dataset.ctaShop) p.shop = el.dataset.ctaShop;
+    return p;
+  }
+  // 노출: 버튼이 화면에 50% 이상 보이면 페이지 방문당 1번만 기록
+  var ctaSeen = {};
+  var ctaIo = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (!en.isIntersecting) return;
+      var id = en.target.dataset.ctaId;
+      if (ctaSeen[id]) return;
+      ctaSeen[id] = true;
+      track('cta_impression', ctaProps(en.target));
+      ctaIo.unobserve(en.target);
+    });
+  }, { threshold: 0.5 });
+  ctaEls.forEach(function (el) { ctaIo.observe(el); });
+  // 클릭: 버튼을 누를 때마다 기록 (기존 coupon_claim·reorder_shop_click 이벤트는 그대로 유지)
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-cta-id]');
+    if (el) track('cta_click', ctaProps(el));
+  }, true);
+
   // ---------- 스크롤 등장 & 하단 고정 CTA ----------
   // 화면 하단 90% 지점을 지난 섹션은 모두 노출 (빠르게 건너뛰어도 빈 화면이 남지 않도록)
   var pending = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
